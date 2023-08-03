@@ -7,7 +7,25 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	help := "Please specify a subcommand:\n\t" +
+		"- 'ls' to fetch all your TODOs."
+
+	if len(os.Args) < 2 {
+		fmt.Println(help)
+		os.Exit(1)
+	}
+
+	var cmd func([]string) error
+	switch os.Args[1] {
+	case "ls":
+		cmd = ls
+
+	default:
+		fmt.Println(help)
+		os.Exit(1)
+	}
+
+	if err := cmd(os.Args[2:]); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -22,7 +40,7 @@ type Todo struct {
 	Items []Item `json:"items"`
 }
 
-func run() error {
+func ls(args []string) error {
 	path := "todo.json"
 	content, err := os.ReadFile(path)
 	if err != nil {
