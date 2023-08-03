@@ -11,6 +11,7 @@ func main() {
 	help := "Please specify a subcommand:\n\t" +
 		"- 'ls' to fetch all your TODOs.\n\t" +
 		"- 'add' to add a new TODO.\n\t" +
+		"- 'rm' to delete a TODO.\n\t"
 
 	if len(os.Args) < 2 {
 		fmt.Println(help)
@@ -24,6 +25,9 @@ func main() {
 
 	case "add":
 		cmd = add
+
+	case "rm":
+		cmd = rm
 
 	default:
 		fmt.Println(help)
@@ -100,6 +104,54 @@ func add(args []string) error {
 		Message: msg,
 	})
 
+	b, err := json.Marshal(todo)
+	if err != nil {
+		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
+	}
+
+	if err := os.WriteFile(path, b, 0666); err != nil {
+		return fmt.Errorf("writing new content: %w", err)
+	}
+
+	return nil
+}
+
+func rm(args []string) error {
+	flag := flag.NewFlagSet("todo rm", flag.ExitOnError)
+
+	var name string
+	flag.StringVar(&name, "n", "", "Name of the item to add.")
+
+	flag.Parse(args)
+
+	if name == "" {
+		return fmt.Errorf("name not passed")
+	}
+
+	path := "todo.json"
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("opening file[%s]: %w", path, err)
+	}
+
+	var todo Todo
+	if err := json.Unmarshal(content, &todo); err != nil {
+		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+	}
+
+	new := make([]Item, 0, len(todo.Items))
+	for _, i := range todo.Items {
+		if i.Name == name {
+			continue
+		}
+
+		new = append(new, Item{
+			Name:    i.Name,
+			Message: i.Message,
+		})
+	}
+
+	todo.Items = new
 	b, err := json.Marshal(todo)
 	if err != nil {
 		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
