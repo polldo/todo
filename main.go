@@ -10,7 +10,7 @@ import (
 func main() {
 	help := "Please specify a subcommand:\n\t" +
 		"- 'ls' to fetch all your TODOs.\n\t" +
-		"- 'ls' to fetch all your TODOs."
+		"- 'add' to add a new TODO.\n\t" +
 
 	if len(os.Args) < 2 {
 		fmt.Println(help)
