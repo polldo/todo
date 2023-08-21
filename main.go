@@ -61,9 +61,8 @@ func ls(args []string) error {
 		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
 	}
 
-	fmt.Println("Content: ")
 	for _, i := range todo.Items {
-		fmt.Println("Item:", i.Name, "-", "Message:", i.Message)
+		fmt.Printf("%s:    %s\n", i.Name, i.Message)
 	}
 
 	return nil
