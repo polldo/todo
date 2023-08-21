@@ -46,7 +46,10 @@ type Item struct {
 }
 
 type Todo struct {
-	Items []Item `json:"items"`
+	High []Item `json:"high"`
+	Mid  []Item `json:"mid"`
+	Low  []Item `json:"low"`
+	Done []Item `json:"done"`
 }
 
 func ls(args []string) error {
@@ -61,7 +64,13 @@ func ls(args []string) error {
 		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
 	}
 
-	for _, i := range todo.Items {
+	for _, i := range todo.High {
+		fmt.Printf("%s:    %s\n", i.Name, i.Message)
+	}
+	for _, i := range todo.Mid {
+		fmt.Printf("%s:    %s\n", i.Name, i.Message)
+	}
+	for _, i := range todo.Low {
 		fmt.Printf("%s:    %s\n", i.Name, i.Message)
 	}
 
@@ -98,7 +107,7 @@ func add(args []string) error {
 		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
 	}
 
-	todo.Items = append(todo.Items, Item{
+	todo.Low = append(todo.Low, Item{
 		Name:    name,
 		Message: msg,
 	})
@@ -138,19 +147,26 @@ func rm(args []string) error {
 		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
 	}
 
-	new := make([]Item, 0, len(todo.Items))
-	for _, i := range todo.Items {
-		if i.Name == name {
-			continue
-		}
+	filter := func(items []Item, name string) []Item {
+		res := make([]Item, 0, len(items))
+		for _, it := range items {
+			if it.Name == name {
+				continue
+			}
 
-		new = append(new, Item{
-			Name:    i.Name,
-			Message: i.Message,
-		})
+			res = append(res, Item{
+				Name:    it.Name,
+				Message: it.Message,
+			})
+		}
+		return res
 	}
 
-	todo.Items = new
+	todo.Low = filter(todo.Low, name)
+	todo.Mid = filter(todo.Mid, name)
+	todo.High = filter(todo.High, name)
+	todo.Done = filter(todo.Done, name)
+
 	b, err := json.Marshal(todo)
 	if err != nil {
 		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
