@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -28,6 +29,9 @@ func main() {
 
 	case "rm":
 		cmd = rm
+
+	case "update":
+		cmd = update
 
 	default:
 		fmt.Println(help)
@@ -77,6 +81,15 @@ func ls(args []string) error {
 	return nil
 }
 
+func contains(items []Item, name string) bool {
+	for _, it := range items {
+		if it.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func add(args []string) error {
 	flag := flag.NewFlagSet("todo add", flag.ExitOnError)
 
@@ -107,10 +120,116 @@ func add(args []string) error {
 		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
 	}
 
+	if contains(todo.Low, name) || contains(todo.Mid, name) || contains(todo.High, name) || contains(todo.Done, name) {
+		return errors.New("this task exists already")
+	}
+
 	todo.Low = append(todo.Low, Item{
 		Name:    name,
 		Message: msg,
 	})
+
+	b, err := json.Marshal(todo)
+	if err != nil {
+		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
+	}
+
+	if err := os.WriteFile(path, b, 0666); err != nil {
+		return fmt.Errorf("writing new content: %w", err)
+	}
+
+	return nil
+}
+
+func update(args []string) error {
+	flag := flag.NewFlagSet("todo update", flag.ExitOnError)
+
+	var name string
+	flag.StringVar(&name, "n", "", "Name of the item to update.")
+
+	var msg string
+	flag.StringVar(&msg, "m", "", "Updated message.")
+
+	var pri string
+	flag.StringVar(&pri, "p", "", "Updated priority (high - mid - low).")
+
+	flag.Parse(args)
+
+	if name == "" {
+		return fmt.Errorf("name not passed")
+	}
+
+	if msg == "" && pri == "" {
+		return nil
+	}
+
+	if pri != "" && pri != "high" && pri != "mid" && pri != "low" {
+		return fmt.Errorf("invalid priority, choose one of: 'high', 'mid' or 'low'")
+	}
+
+	path := "todo.json"
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("opening file[%s]: %w", path, err)
+	}
+
+	var todo Todo
+	if err := json.Unmarshal(content, &todo); err != nil {
+		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+	}
+
+	pop := func(items []Item, name string) (Item, []Item) {
+		item := Item{}
+		res := make([]Item, 0, len(items))
+
+		for _, it := range items {
+			if it.Name == name {
+				item = it
+				continue
+			}
+
+			res = append(res, Item{
+				Name:    it.Name,
+				Message: it.Message,
+			})
+		}
+		return item, res
+	}
+
+	var item Item
+	var temp Item
+	temp, todo.Low = pop(todo.Low, name)
+	if temp.Name != "" {
+		item = temp
+	}
+	temp, todo.Mid = pop(todo.Mid, name)
+	if temp.Name != "" {
+		item = temp
+	}
+	temp, todo.High = pop(todo.High, name)
+	if temp.Name != "" {
+		item = temp
+	}
+
+	if item.Name == "" {
+		return errors.New("not found")
+	}
+
+	// Update task message.
+	if msg != "" {
+		item.Message = msg
+	}
+
+	switch pri {
+	case "high":
+		todo.High = append(todo.High, item)
+	case "mid":
+		todo.Mid = append(todo.Mid, item)
+	case "low":
+		todo.Low = append(todo.Low, item)
+	default:
+		return fmt.Errorf("priority[%s] not valid", pri)
+	}
 
 	b, err := json.Marshal(todo)
 	if err != nil {
