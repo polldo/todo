@@ -247,7 +247,7 @@ func rm(args []string) error {
 	flag := flag.NewFlagSet("todo rm", flag.ExitOnError)
 
 	var name string
-	flag.StringVar(&name, "n", "", "Name of the item to add.")
+	flag.StringVar(&name, "n", "", "Name of the item to remove.")
 
 	flag.Parse(args)
 
