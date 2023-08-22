@@ -154,6 +154,9 @@ func add(args []string) error {
 	var msg string
 	flag.StringVar(&msg, "m", "", "Message of the item to add.")
 
+	var prio string
+	flag.StringVar(&prio, "p", "low", "Priority of the item to add (high - mid - low).")
+
 	flag.Parse(args)
 
 	if name == "" {
@@ -162,6 +165,10 @@ func add(args []string) error {
 
 	if msg == "" {
 		return fmt.Errorf("message not passed")
+	}
+
+	if prio != "" && prio != "high" && prio != "mid" && prio != "low" {
+		return fmt.Errorf("invalid priority, choose one of: 'high', 'mid' or 'low'")
 	}
 
 	path := "todo.json"
@@ -179,10 +186,21 @@ func add(args []string) error {
 		return errors.New("this task exists already")
 	}
 
-	todo.Low = append(todo.Low, Item{
+	item := Item{
 		Name:    name,
 		Message: msg,
-	})
+	}
+
+	switch prio {
+	case "high":
+		todo.High = append(todo.High, item)
+	case "mid":
+		todo.Mid = append(todo.Mid, item)
+	case "low":
+		todo.Low = append(todo.Low, item)
+	default:
+		return fmt.Errorf("priority[%s] not valid", prio)
+	}
 
 	b, err := json.Marshal(todo)
 	if err != nil {
