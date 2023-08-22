@@ -60,6 +60,13 @@ type Todo struct {
 }
 
 func ls(args []string) error {
+	flag := flag.NewFlagSet("todo ls", flag.ExitOnError)
+
+	var all bool
+	flag.BoolVar(&all, "a", false, "Show also completed TODOs.")
+
+	flag.Parse(args)
+
 	path := "todo.json"
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -71,14 +78,29 @@ func ls(args []string) error {
 		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
 	}
 
+	fmt.Println("High:")
 	for _, i := range todo.High {
 		fmt.Printf("%s:    %s\n", i.Name, i.Message)
 	}
+	fmt.Println()
+
+	fmt.Println("Mid:")
 	for _, i := range todo.Mid {
 		fmt.Printf("%s:    %s\n", i.Name, i.Message)
 	}
+	fmt.Println()
+
+	fmt.Println("Low:")
 	for _, i := range todo.Low {
 		fmt.Printf("%s:    %s\n", i.Name, i.Message)
+	}
+	fmt.Println()
+
+	if all {
+		fmt.Println("Done:")
+		for _, i := range todo.Done {
+			fmt.Printf("%s:    %s\n", i.Name, i.Message)
+		}
 	}
 
 	return nil
