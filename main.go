@@ -253,17 +253,21 @@ func update(args []string) error {
 
 	var item Item
 	var temp Item
+	var from *[]Item
 	temp, todo.Low = pop(todo.Low, name)
 	if temp.Name != "" {
 		item = temp
+		from = &todo.Low
 	}
 	temp, todo.Mid = pop(todo.Mid, name)
 	if temp.Name != "" {
 		item = temp
+		from = &todo.Mid
 	}
 	temp, todo.High = pop(todo.High, name)
 	if temp.Name != "" {
 		item = temp
+		from = &todo.High
 	}
 
 	if item.Name == "" {
@@ -283,7 +287,7 @@ func update(args []string) error {
 	case "low":
 		todo.Low = append(todo.Low, item)
 	default:
-		return fmt.Errorf("priority[%s] not valid", pri)
+		*from = append(*from, item)
 	}
 
 	b, err := json.Marshal(todo)
