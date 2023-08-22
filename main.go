@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -65,6 +66,9 @@ func ls(args []string) error {
 	var all bool
 	flag.BoolVar(&all, "a", false, "Show also completed TODOs.")
 
+	var search string
+	flag.StringVar(&search, "s", "", "Search for tasks containing specific string.")
+
 	flag.Parse(args)
 
 	path := "todo.json"
@@ -78,25 +82,51 @@ func ls(args []string) error {
 		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
 	}
 
-	fmt.Println("High:")
-	for _, i := range todo.High {
-		fmt.Printf("%s:    %s\n", i.Name, i.Message)
-	}
-	fmt.Println()
+	filter := func(items []Item, search string) []Item {
+		res := make([]Item, 0, len(items))
+		for _, it := range items {
+			if !strings.Contains(it.Name, search) && !strings.Contains(it.Message, search) {
+				continue
+			}
 
-	fmt.Println("Mid:")
-	for _, i := range todo.Mid {
-		fmt.Printf("%s:    %s\n", i.Name, i.Message)
+			res = append(res, Item{
+				Name:    it.Name,
+				Message: it.Message,
+			})
+		}
+		return res
 	}
-	fmt.Println()
 
-	fmt.Println("Low:")
-	for _, i := range todo.Low {
-		fmt.Printf("%s:    %s\n", i.Name, i.Message)
+	todo.High = filter(todo.High, search)
+	todo.Mid = filter(todo.Mid, search)
+	todo.Low = filter(todo.Low, search)
+	todo.Done = filter(todo.Done, search)
+
+	if len(todo.High) > 0 {
+		fmt.Println("High:")
+		for _, i := range todo.High {
+			fmt.Printf("%s:    %s\n", i.Name, i.Message)
+		}
+		fmt.Println()
 	}
-	fmt.Println()
 
-	if all {
+	if len(todo.Mid) > 0 {
+		fmt.Println("Mid:")
+		for _, i := range todo.Mid {
+			fmt.Printf("%s:    %s\n", i.Name, i.Message)
+		}
+		fmt.Println()
+	}
+
+	if len(todo.Low) > 0 {
+		fmt.Println("Low:")
+		for _, i := range todo.Low {
+			fmt.Printf("%s:    %s\n", i.Name, i.Message)
+		}
+		fmt.Println()
+	}
+
+	if all && len(todo.Done) > 0 {
 		fmt.Println("Done:")
 		for _, i := range todo.Done {
 			fmt.Printf("%s:    %s\n", i.Name, i.Message)
