@@ -60,6 +60,33 @@ type Todo struct {
 	Done []Item `json:"done"`
 }
 
+func fromFile(path string) (Todo, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return Todo{}, fmt.Errorf("opening file[%s]: %w", path, err)
+	}
+
+	var todo Todo
+	if err := json.Unmarshal(content, &todo); err != nil {
+		return Todo{}, fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+	}
+
+	return todo, nil
+}
+
+func toFile(path string, todo Todo) error {
+	b, err := json.Marshal(todo)
+	if err != nil {
+		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
+	}
+
+	if err := os.WriteFile(path, b, 0666); err != nil {
+		return fmt.Errorf("writing new content: %w", err)
+	}
+
+	return nil
+}
+
 func ls(args []string) error {
 	flag := flag.NewFlagSet("todo ls", flag.ExitOnError)
 
@@ -72,14 +99,9 @@ func ls(args []string) error {
 	flag.Parse(args)
 
 	path := "todo.json"
-	content, err := os.ReadFile(path)
+	todo, err := fromFile(path)
 	if err != nil {
-		return fmt.Errorf("opening file[%s]: %w", path, err)
-	}
-
-	var todo Todo
-	if err := json.Unmarshal(content, &todo); err != nil {
-		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+		return fmt.Errorf("read todo from file: %w", err)
 	}
 
 	filter := func(items []Item, search string) []Item {
@@ -172,14 +194,9 @@ func add(args []string) error {
 	}
 
 	path := "todo.json"
-	content, err := os.ReadFile(path)
+	todo, err := fromFile(path)
 	if err != nil {
-		return fmt.Errorf("opening file[%s]: %w", path, err)
-	}
-
-	var todo Todo
-	if err := json.Unmarshal(content, &todo); err != nil {
-		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+		return fmt.Errorf("read todo from file: %w", err)
 	}
 
 	if contains(todo.Low, name) || contains(todo.Mid, name) || contains(todo.High, name) || contains(todo.Done, name) {
@@ -202,13 +219,8 @@ func add(args []string) error {
 		return fmt.Errorf("priority[%s] not valid", prio)
 	}
 
-	b, err := json.Marshal(todo)
-	if err != nil {
-		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
-	}
-
-	if err := os.WriteFile(path, b, 0666); err != nil {
-		return fmt.Errorf("writing new content: %w", err)
+	if err := toFile(path, todo); err != nil {
+		return fmt.Errorf("write todo to file: %w", err)
 	}
 
 	return nil
@@ -241,14 +253,9 @@ func update(args []string) error {
 	}
 
 	path := "todo.json"
-	content, err := os.ReadFile(path)
+	todo, err := fromFile(path)
 	if err != nil {
-		return fmt.Errorf("opening file[%s]: %w", path, err)
-	}
-
-	var todo Todo
-	if err := json.Unmarshal(content, &todo); err != nil {
-		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+		return fmt.Errorf("read todo from file: %w", err)
 	}
 
 	pop := func(items []Item, name string) (Item, []Item) {
@@ -308,13 +315,8 @@ func update(args []string) error {
 		*from = append(*from, item)
 	}
 
-	b, err := json.Marshal(todo)
-	if err != nil {
-		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
-	}
-
-	if err := os.WriteFile(path, b, 0666); err != nil {
-		return fmt.Errorf("writing new content: %w", err)
+	if err := toFile(path, todo); err != nil {
+		return fmt.Errorf("write todo to file: %w", err)
 	}
 
 	return nil
@@ -333,14 +335,9 @@ func done(args []string) error {
 	}
 
 	path := "todo.json"
-	content, err := os.ReadFile(path)
+	todo, err := fromFile(path)
 	if err != nil {
-		return fmt.Errorf("opening file[%s]: %w", path, err)
-	}
-
-	var todo Todo
-	if err := json.Unmarshal(content, &todo); err != nil {
-		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+		return fmt.Errorf("read todo from file: %w", err)
 	}
 
 	pop := func(items []Item, name string) (Item, []Item) {
@@ -382,13 +379,8 @@ func done(args []string) error {
 
 	todo.Done = append(todo.Done, item)
 
-	b, err := json.Marshal(todo)
-	if err != nil {
-		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
-	}
-
-	if err := os.WriteFile(path, b, 0666); err != nil {
-		return fmt.Errorf("writing new content: %w", err)
+	if err := toFile(path, todo); err != nil {
+		return fmt.Errorf("write todo to file: %w", err)
 	}
 
 	return nil
@@ -407,14 +399,9 @@ func undone(args []string) error {
 	}
 
 	path := "todo.json"
-	content, err := os.ReadFile(path)
+	todo, err := fromFile(path)
 	if err != nil {
-		return fmt.Errorf("opening file[%s]: %w", path, err)
-	}
-
-	var todo Todo
-	if err := json.Unmarshal(content, &todo); err != nil {
-		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+		return fmt.Errorf("read todo from file: %w", err)
 	}
 
 	pop := func(items []Item, name string) (Item, []Item) {
@@ -443,13 +430,8 @@ func undone(args []string) error {
 
 	todo.High = append(todo.High, item)
 
-	b, err := json.Marshal(todo)
-	if err != nil {
-		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
-	}
-
-	if err := os.WriteFile(path, b, 0666); err != nil {
-		return fmt.Errorf("writing new content: %w", err)
+	if err := toFile(path, todo); err != nil {
+		return fmt.Errorf("write todo to file: %w", err)
 	}
 
 	return nil
@@ -468,14 +450,9 @@ func rm(args []string) error {
 	}
 
 	path := "todo.json"
-	content, err := os.ReadFile(path)
+	todo, err := fromFile(path)
 	if err != nil {
-		return fmt.Errorf("opening file[%s]: %w", path, err)
-	}
-
-	var todo Todo
-	if err := json.Unmarshal(content, &todo); err != nil {
-		return fmt.Errorf("unmarshaling content[%s]: %w", content, err)
+		return fmt.Errorf("read todo from file: %w", err)
 	}
 
 	filter := func(items []Item, name string) []Item {
@@ -498,13 +475,8 @@ func rm(args []string) error {
 	todo.High = filter(todo.High, name)
 	todo.Done = filter(todo.Done, name)
 
-	b, err := json.Marshal(todo)
-	if err != nil {
-		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
-	}
-
-	if err := os.WriteFile(path, b, 0666); err != nil {
-		return fmt.Errorf("writing new content: %w", err)
+	if err := toFile(path, todo); err != nil {
+		return fmt.Errorf("write todo to file: %w", err)
 	}
 
 	return nil
