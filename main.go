@@ -120,10 +120,6 @@ func ls(args []string) error {
 	}
 
 	todo.High = filter(todo.High, search)
-	todo.Mid = filter(todo.Mid, search)
-	todo.Low = filter(todo.Low, search)
-	todo.Done = filter(todo.Done, search)
-
 	if len(todo.High) > 0 {
 		fmt.Println("High:")
 		for _, i := range todo.High {
@@ -132,6 +128,7 @@ func ls(args []string) error {
 		fmt.Println()
 	}
 
+	todo.Mid = filter(todo.Mid, search)
 	if len(todo.Mid) > 0 {
 		fmt.Println("Mid:")
 		for _, i := range todo.Mid {
@@ -140,6 +137,7 @@ func ls(args []string) error {
 		fmt.Println()
 	}
 
+	todo.Low = filter(todo.Low, search)
 	if len(todo.Low) > 0 {
 		fmt.Println("Low:")
 		for _, i := range todo.Low {
@@ -148,6 +146,7 @@ func ls(args []string) error {
 		fmt.Println()
 	}
 
+	todo.Done = filter(todo.Done, search)
 	if all && len(todo.Done) > 0 {
 		fmt.Println("Done:")
 		for _, i := range todo.Done {
