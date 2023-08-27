@@ -72,7 +72,7 @@ func fromFile(path string) (Todo, error) {
 }
 
 func toFile(path string, todo Todo) error {
-	b, err := json.Marshal(todo)
+	b, err := json.MarshalIndent(todo, "", "    ")
 	if err != nil {
 		return fmt.Errorf("marshaling new content[%v]: %w", todo, err)
 	}
