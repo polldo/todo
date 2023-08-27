@@ -15,8 +15,7 @@ func main() {
 		"- 'add' to add a new TODO.\n\t" +
 		"- 'rm' to delete a TODO.\n\t" +
 		"- 'update' to update a TODO.\n\t" +
-		"- 'done' to mark a TODO as complete.\n\t" +
-		"- 'undone' to mark a TODO as not complete.\n\t"
+		"- 'done' to mark a TODO as complete.\n\t"
 
 	if len(os.Args) < 2 {
 		fmt.Println(help)
@@ -35,8 +34,6 @@ func main() {
 		cmd = update
 	case "done":
 		cmd = done
-	case "undone":
-		cmd = undone
 	default:
 		fmt.Println(help)
 		os.Exit(1)
@@ -198,7 +195,7 @@ func add(args []string) error {
 		return fmt.Errorf("read todo from file: %w", err)
 	}
 
-	if contains(todo.Low, name) || contains(todo.Mid, name) || contains(todo.High, name) || contains(todo.Done, name) {
+	if contains(todo.Low, name) || contains(todo.Mid, name) || contains(todo.High, name) {
 		return errors.New("this task exists already")
 	}
 
@@ -386,57 +383,6 @@ func done(args []string) error {
 	return nil
 }
 
-func undone(args []string) error {
-	flag := flag.NewFlagSet("todo undone", flag.ExitOnError)
-
-	var name string
-	flag.StringVar(&name, "n", "", "Name of the item to mark as not completed.")
-
-	flag.Parse(args)
-
-	if name == "" {
-		return fmt.Errorf("name not passed")
-	}
-
-	path := "todo.json"
-	todo, err := fromFile(path)
-	if err != nil {
-		return fmt.Errorf("read todo from file: %w", err)
-	}
-
-	pop := func(items []Item, name string) (Item, []Item) {
-		item := Item{}
-		res := make([]Item, 0, len(items))
-
-		for _, it := range items {
-			if it.Name == name {
-				item = it
-				continue
-			}
-
-			res = append(res, Item{
-				Name:    it.Name,
-				Message: it.Message,
-			})
-		}
-		return item, res
-	}
-
-	var item Item
-	item, todo.Done = pop(todo.Done, name)
-	if item.Name == "" {
-		return errors.New("not found")
-	}
-
-	todo.High = append(todo.High, item)
-
-	if err := toFile(path, todo); err != nil {
-		return fmt.Errorf("write todo to file: %w", err)
-	}
-
-	return nil
-}
-
 func rm(args []string) error {
 	flag := flag.NewFlagSet("todo rm", flag.ExitOnError)
 
@@ -473,7 +419,6 @@ func rm(args []string) error {
 	todo.Low = filter(todo.Low, name)
 	todo.Mid = filter(todo.Mid, name)
 	todo.High = filter(todo.High, name)
-	todo.Done = filter(todo.Done, name)
 
 	if err := toFile(path, todo); err != nil {
 		return fmt.Errorf("write todo to file: %w", err)
