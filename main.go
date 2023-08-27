@@ -339,13 +339,15 @@ func done(args []string) error {
 		return fmt.Errorf("read todo from file: %w", err)
 	}
 
-	pop := func(items []Item, name string) (Item, []Item) {
+	pop := func(items []Item, name string) (Item, []Item, bool) {
 		item := Item{}
 		res := make([]Item, 0, len(items))
+		found := false
 
 		for _, it := range items {
 			if it.Name == name {
 				item = it
+				found = true
 				continue
 			}
 
@@ -354,22 +356,21 @@ func done(args []string) error {
 				Message: it.Message,
 			})
 		}
-		return item, res
+		return item, res, found
 	}
 
 	var item Item
-	var temp Item
-	temp, todo.Low = pop(todo.Low, name)
-	if temp.Name != "" {
-		item = temp
+	if it, items, found := pop(todo.Low, name); found {
+		item = it
+		todo.Low = items
 	}
-	temp, todo.Mid = pop(todo.Mid, name)
-	if temp.Name != "" {
-		item = temp
+	if it, items, found := pop(todo.Mid, name); found {
+		item = it
+		todo.Mid = items
 	}
-	temp, todo.High = pop(todo.High, name)
-	if temp.Name != "" {
-		item = temp
+	if it, items, found := pop(todo.High, name); found {
+		item = it
+		todo.High = items
 	}
 
 	if item.Name == "" {
