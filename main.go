@@ -116,39 +116,40 @@ func ls(args []string) error {
 		return res
 	}
 
-	todo.High = filter(todo.High, search)
-	if len(todo.High) > 0 {
-		fmt.Println("High:")
-		for _, i := range todo.High {
-			fmt.Printf("%s:    %s\n", i.Name, i.Message)
+	print := func(items []Item, head string) {
+		max := 0
+		for _, it := range items {
+			if len(it.Name) > max {
+				max = len(it.Name)
+			}
+		}
+
+		fmt.Println(head)
+		for _, it := range items {
+			tab := strings.Repeat(" ", max+4-len(it.Name))
+			fmt.Printf("%s:%s%s\n", it.Name, tab, it.Message)
 		}
 		fmt.Println()
+	}
+
+	todo.High = filter(todo.High, search)
+	if len(todo.High) > 0 {
+		print(todo.High, "High:")
 	}
 
 	todo.Mid = filter(todo.Mid, search)
 	if len(todo.Mid) > 0 {
-		fmt.Println("Mid:")
-		for _, i := range todo.Mid {
-			fmt.Printf("%s:    %s\n", i.Name, i.Message)
-		}
-		fmt.Println()
+		print(todo.Mid, "Mid:")
 	}
 
 	todo.Low = filter(todo.Low, search)
 	if len(todo.Low) > 0 {
-		fmt.Println("Low:")
-		for _, i := range todo.Low {
-			fmt.Printf("%s:    %s\n", i.Name, i.Message)
-		}
-		fmt.Println()
+		print(todo.Low, "Low:")
 	}
 
 	todo.Done = filter(todo.Done, search)
 	if all && len(todo.Done) > 0 {
-		fmt.Println("Done:")
-		for _, i := range todo.Done {
-			fmt.Printf("%s:    %s\n", i.Name, i.Message)
-		}
+		print(todo.Done, "Done:")
 	}
 
 	return nil
