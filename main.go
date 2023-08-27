@@ -254,61 +254,49 @@ func update(args []string) error {
 		return fmt.Errorf("read todo from file: %w", err)
 	}
 
-	pop := func(items []Item, name string) (Item, []Item) {
-		item := Item{}
-		res := make([]Item, 0, len(items))
-
-		for _, it := range items {
-			if it.Name == name {
-				item = it
-				continue
+	updateMsg := func(items []Item, name string, newMsg string) {
+		for i, item := range items {
+			if item.Name == name {
+				items[i].Message = newMsg
 			}
-
-			res = append(res, Item{
-				Name:    it.Name,
-				Message: it.Message,
-			})
 		}
-		return item, res
 	}
 
-	var item Item
-	var temp Item
-	var from *[]Item
-	temp, todo.Low = pop(todo.Low, name)
-	if temp.Name != "" {
-		item = temp
-		from = &todo.Low
-	}
-	temp, todo.Mid = pop(todo.Mid, name)
-	if temp.Name != "" {
-		item = temp
-		from = &todo.Mid
-	}
-	temp, todo.High = pop(todo.High, name)
-	if temp.Name != "" {
-		item = temp
-		from = &todo.High
-	}
-
-	if item.Name == "" {
-		return errors.New("not found")
-	}
-
-	// Update task message.
 	if msg != "" {
-		item.Message = msg
+		updateMsg(todo.Low, name, msg)
+		updateMsg(todo.Mid, name, msg)
+		updateMsg(todo.High, name, msg)
 	}
 
-	switch pri {
-	case "high":
-		todo.High = append(todo.High, item)
-	case "mid":
-		todo.Mid = append(todo.Mid, item)
-	case "low":
-		todo.Low = append(todo.Low, item)
-	default:
-		*from = append(*from, item)
+	if pri != "" {
+		var item Item
+		if it, items, found := pop(todo.Low, name); found {
+			item = it
+			todo.Low = items
+		}
+		if it, items, found := pop(todo.Mid, name); found {
+			item = it
+			todo.Mid = items
+		}
+		if it, items, found := pop(todo.High, name); found {
+			item = it
+			todo.High = items
+		}
+
+		if item.Name == "" {
+			return errors.New("not found")
+		}
+
+		switch pri {
+		case "high":
+			todo.High = append(todo.High, item)
+		case "mid":
+			todo.Mid = append(todo.Mid, item)
+		case "low":
+			todo.Low = append(todo.Low, item)
+		default:
+			return fmt.Errorf("priority[%s] not valid", pri)
+		}
 	}
 
 	if err := toFile(path, todo); err != nil {
@@ -316,6 +304,26 @@ func update(args []string) error {
 	}
 
 	return nil
+}
+
+func pop(items []Item, name string) (Item, []Item, bool) {
+	item := Item{}
+	res := make([]Item, 0, len(items))
+	found := false
+
+	for _, it := range items {
+		if it.Name == name {
+			item = it
+			found = true
+			continue
+		}
+
+		res = append(res, Item{
+			Name:    it.Name,
+			Message: it.Message,
+		})
+	}
+	return item, res, found
 }
 
 func done(args []string) error {
@@ -334,26 +342,6 @@ func done(args []string) error {
 	todo, err := fromFile(path)
 	if err != nil {
 		return fmt.Errorf("read todo from file: %w", err)
-	}
-
-	pop := func(items []Item, name string) (Item, []Item, bool) {
-		item := Item{}
-		res := make([]Item, 0, len(items))
-		found := false
-
-		for _, it := range items {
-			if it.Name == name {
-				item = it
-				found = true
-				continue
-			}
-
-			res = append(res, Item{
-				Name:    it.Name,
-				Message: it.Message,
-			})
-		}
-		return item, res, found
 	}
 
 	var item Item
