@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
@@ -45,6 +46,23 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func path(dir string) string {
+	// Default to current directory.
+	const def = "todo.json"
+
+	// Env var has precedence.
+	if p, ok := os.LookupEnv("TODO_DIR"); ok {
+		return filepath.Join(p, def)
+	}
+
+	// If not specified use the provided dir.
+	if dir != "" {
+		return filepath.Join(dir, def)
+	}
+
+	return def
 }
 
 type Item struct {
@@ -95,10 +113,13 @@ func ls(args []string) error {
 	var search string
 	flag.StringVar(&search, "s", "", "Search for tasks containing specific string.")
 
+	var dir string
+	flag.StringVar(&dir, "d", "", "Path of the directory containing the 'todo.json' to read/write.")
+
 	flag.Parse(args)
 
-	path := "todo.json"
-	todo, err := fromFile(path)
+	fpath := path(dir)
+	todo, err := fromFile(fpath)
 	if err != nil {
 		return fmt.Errorf("read todo from file: %w", err)
 	}
@@ -179,6 +200,9 @@ func add(args []string) error {
 	var prio string
 	flag.StringVar(&prio, "p", "low", "Priority of the item to add (high - mid - low).")
 
+	var dir string
+	flag.StringVar(&dir, "d", "", "Path of the directory containing the 'todo.json' to read/write.")
+
 	flag.Parse(args)
 
 	if name == "" {
@@ -193,8 +217,8 @@ func add(args []string) error {
 		return fmt.Errorf("invalid priority, choose one of: 'high', 'mid' or 'low'")
 	}
 
-	path := "todo.json"
-	todo, err := fromFile(path)
+	fpath := path(dir)
+	todo, err := fromFile(fpath)
 	if err != nil {
 		return fmt.Errorf("read todo from file: %w", err)
 	}
@@ -219,7 +243,7 @@ func add(args []string) error {
 		return fmt.Errorf("priority[%s] not valid", prio)
 	}
 
-	if err := toFile(path, todo); err != nil {
+	if err := toFile(fpath, todo); err != nil {
 		return fmt.Errorf("write todo to file: %w", err)
 	}
 
@@ -238,6 +262,9 @@ func update(args []string) error {
 	var pri string
 	flag.StringVar(&pri, "p", "", "Updated priority (high - mid - low).")
 
+	var dir string
+	flag.StringVar(&dir, "d", "", "Path of the directory containing the 'todo.json' to read/write.")
+
 	flag.Parse(args)
 
 	if name == "" {
@@ -252,8 +279,8 @@ func update(args []string) error {
 		return fmt.Errorf("invalid priority, choose one of: 'high', 'mid' or 'low'")
 	}
 
-	path := "todo.json"
-	todo, err := fromFile(path)
+	fpath := path(dir)
+	todo, err := fromFile(fpath)
 	if err != nil {
 		return fmt.Errorf("read todo from file: %w", err)
 	}
@@ -303,7 +330,7 @@ func update(args []string) error {
 		}
 	}
 
-	if err := toFile(path, todo); err != nil {
+	if err := toFile(fpath, todo); err != nil {
 		return fmt.Errorf("write todo to file: %w", err)
 	}
 
@@ -336,14 +363,17 @@ func done(args []string) error {
 	var name string
 	flag.StringVar(&name, "n", "", "Name of the item to complete.")
 
+	var dir string
+	flag.StringVar(&dir, "d", "", "Path of the directory containing the 'todo.json' to read/write.")
+
 	flag.Parse(args)
 
 	if name == "" {
 		return fmt.Errorf("name not passed")
 	}
 
-	path := "todo.json"
-	todo, err := fromFile(path)
+	fpath := path(dir)
+	todo, err := fromFile(fpath)
 	if err != nil {
 		return fmt.Errorf("read todo from file: %w", err)
 	}
@@ -368,7 +398,7 @@ func done(args []string) error {
 
 	todo.Done = append(todo.Done, item)
 
-	if err := toFile(path, todo); err != nil {
+	if err := toFile(fpath, todo); err != nil {
 		return fmt.Errorf("write todo to file: %w", err)
 	}
 
@@ -381,14 +411,17 @@ func rm(args []string) error {
 	var name string
 	flag.StringVar(&name, "n", "", "Name of the item to remove.")
 
+	var dir string
+	flag.StringVar(&dir, "d", "", "Path of the directory containing the 'todo.json' to read/write.")
+
 	flag.Parse(args)
 
 	if name == "" {
 		return fmt.Errorf("name not passed")
 	}
 
-	path := "todo.json"
-	todo, err := fromFile(path)
+	fpath := path(dir)
+	todo, err := fromFile(fpath)
 	if err != nil {
 		return fmt.Errorf("read todo from file: %w", err)
 	}
@@ -412,7 +445,7 @@ func rm(args []string) error {
 	todo.Mid = filter(todo.Mid, name)
 	todo.High = filter(todo.High, name)
 
-	if err := toFile(path, todo); err != nil {
+	if err := toFile(fpath, todo); err != nil {
 		return fmt.Errorf("write todo to file: %w", err)
 	}
 
