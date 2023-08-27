@@ -80,6 +80,12 @@ type Todo struct {
 func fromFile(path string) (Todo, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			if err := os.WriteFile(path, []byte("{}"), 0666); err != nil {
+				return Todo{}, fmt.Errorf("creating todo file: %w", err)
+			}
+			return Todo{}, nil
+		}
 		return Todo{}, fmt.Errorf("opening file[%s]: %w", path, err)
 	}
 
