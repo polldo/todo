@@ -10,6 +10,41 @@ It leverages a JSON file for storage, giving you the flexibility to manually edi
 By default, the tool operates on a file named 'todo.json' in the current directory.
 But don't worry, this is configurable!
 
+## Installation & Building
+To use `todo`, you'll first need to have Go installed on your machine. 
+If you haven't installed Go yet, you can download it and follow the installation instructions from the [official Go website](https://golang.org/dl/).
+
+#### Installing Directly with Go
+You can install `todo` directly using the go tool without manually cloning the repository:
+``` bash
+go install github.com/polldo/todo@latest
+```
+
+Once installed, you can start using the tool.
+For example, to add a new task:
+``` bash
+todo add -n <name> -m <description>
+```
+
+
+#### Building the Project
+Clone this repository to your local machine:
+``` bash
+git clone https://github.com/polldo/todo.git
+cd todo
+```
+
+After cloning the repository, you can build the project using the Go build tool:
+``` bash
+go build -o todo
+```
+With the executable built, you can start using the tool.
+For example, to add a new task:
+``` bash
+./todo add -n <name> -m <description>
+```
+
+
 ## Priority Levels
 Tasks have three priority levels: `high`, `mid`, and `low`. Assign or change a task's priority to influence the order in which they are displayed.
 
