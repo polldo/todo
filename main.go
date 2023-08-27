@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 func main() {
@@ -116,7 +118,7 @@ func ls(args []string) error {
 		return res
 	}
 
-	print := func(items []Item, head string) {
+	print := func(items []Item, head string, colors []color.Attribute) {
 		max := 0
 		for _, it := range items {
 			if len(it.Name) > max {
@@ -125,31 +127,32 @@ func ls(args []string) error {
 		}
 
 		fmt.Println(head)
-		for _, it := range items {
+		for i, it := range items {
+			c := colors[i%len(colors)]
 			tab := strings.Repeat(" ", max+4-len(it.Name))
-			fmt.Printf("%s:%s%s\n", it.Name, tab, it.Message)
+			color.New(c).Printf("%s:%s%s\n", it.Name, tab, it.Message)
 		}
 		fmt.Println()
 	}
 
 	todo.High = filter(todo.High, search)
 	if len(todo.High) > 0 {
-		print(todo.High, "High:")
+		print(todo.High, "High:", []color.Attribute{color.FgRed, color.FgHiMagenta})
 	}
 
 	todo.Mid = filter(todo.Mid, search)
 	if len(todo.Mid) > 0 {
-		print(todo.Mid, "Mid:")
+		print(todo.Mid, "Mid:", []color.Attribute{color.FgGreen, color.FgHiGreen})
 	}
 
 	todo.Low = filter(todo.Low, search)
 	if len(todo.Low) > 0 {
-		print(todo.Low, "Low:")
+		print(todo.Low, "Low:", []color.Attribute{color.FgBlue, color.FgHiBlue})
 	}
 
 	todo.Done = filter(todo.Done, search)
 	if all && len(todo.Done) > 0 {
-		print(todo.Done, "Done:")
+		print(todo.Done, "Done:", []color.Attribute{color.Underline})
 	}
 
 	return nil
