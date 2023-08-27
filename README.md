@@ -2,7 +2,7 @@
 A CLI tool written in Go for managing your daily tasks.
 Use this tool to quickly add, remove, update, and list tasks.
 
-![image](https://github.com/polldo/todo/assets/17302582/46833224-f68f-4947-a7ab-2a1496c549b0)
+![image](https://github.com/polldo/todo/assets/17302582/47c3008e-6700-416a-9329-cf42d955ac6f)
 
 ## Introduction
 `todo` allows you to maintain a simple todo list.
